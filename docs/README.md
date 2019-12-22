@@ -13,7 +13,7 @@ Installation
 ------------
 
 1. Be sure to have SketchUp 2017 or newer.
-2. Download latest Virtual Assistant plugin from the [SketchUcation PluginStore](https://sketchucation.com/).
+2. Download latest Virtual Assistant plugin from the [SketchUcation PluginStore](https://sketchucation.com/plugin/2270-virtual_assistant).
 3. Install plugin following this [guide](https://help.sketchup.com/article/3000263).
 
 Now, you should have in SketchUp a "Virtual Assistant" menu in "Extensions" menu.

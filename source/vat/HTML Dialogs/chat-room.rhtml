@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="<%= Sketchup.get_locale %>">
+
+<head>
+
+	<meta charset="UTF-8">
+	<meta name="x-copyright" content="© 2019 Samuel Tallet">
+	<meta name="x-license" content="GNU General Public License 3.0">
+
+	<title><%= TRANSLATE['Virtual Assistant Chat Room'] %></title>
+
+	<%= scripts['lib/auto-complete.min.js'] %>
+	<%= scripts['lib/compromise.min.js'] %>
+	<%= scripts['chat-room.js'] %>
+
+	<%= styles['lib/auto-complete.css'] %>
+	<%= styles['chat-room.css'] %>
+
+</head>
+
+<body>
+
+	<div id="messages"></div>
+
+	<textarea id="user-input" rows="4"></textarea>
+
+	<button id="user-say-button"><%= TRANSLATE['Say'] %></button>
+
+</body>
+
+</html>

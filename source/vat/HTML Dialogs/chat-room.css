@@ -1,0 +1,45 @@
+/**
+ * Virtual Assistant (VAT) Chat Room.
+ *
+ * Package: VAT extension for SketchUp
+ *
+ * Copyright: © 2019 Samuel Tallet
+ *
+ * Licence: GNU General Public License 3.0
+ */
+
+ #messages {
+	
+	margin: 10px;
+
+}
+
+.message {
+
+	margin-bottom: 5px;
+
+}
+
+.user-message {
+
+	font-weight: bold;
+
+}
+
+#user-input {
+
+	margin-left: 10px;
+	width: 440px;
+
+}
+
+#user-say-button {
+
+	position: relative;
+	top: -5px;
+	left: 0;
+
+	margin-left: 10px;
+	width: 446px;
+
+}

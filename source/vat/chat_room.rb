@@ -24,6 +24,7 @@ require 'sketchup'
 require 'vat/html_dialogs'
 require 'vat/memory'
 require 'vat/model'
+require 'vat/entities'
 require 'vat/shapes'
 
 # VAT plugin namespace.
@@ -88,9 +89,103 @@ module VAT
 
       end
 
+      @html_dialog.add_action_callback('openModel') do
+
+        if Model.open
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        end
+
+      end
+
       @html_dialog.add_action_callback('cleanModel') do
 
         Model.clean
+
+      end
+
+      @html_dialog.add_action_callback('selectFirstEntity') do
+
+        if Entities.select_first_entity
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('selectFirstGroup') do
+
+        if Entities.select_first_group
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('selectFirstComponent') do
+
+        if Entities.select_first_component
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('moveSelection') do |_context, x, y ,z|
+
+        if Entities.move_selection(x.to_l, y.to_l, z.to_l)
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('rotateSelection') do |_context, angle|
+
+        if Entities.rotate_selection(angle.to_i)
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('scaleSelection') do |_context, scale|
+
+        if Entities.scale_selection(scale.to_f)
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        end
 
       end
 

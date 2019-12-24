@@ -47,6 +47,23 @@ module VAT
 
     end
 
+    # Opens a model.
+    #
+    # @return [Boolean]
+    def self.open
+
+      model_path = UI.openpanel(
+        'Select a SketchUp Model', nil, 'SketchUp Models|*.skp||'
+      )
+
+      return false if model_path.nil?
+
+      Sketchup.open_file(model_path)
+
+      true
+
+    end
+
   end
 
 end

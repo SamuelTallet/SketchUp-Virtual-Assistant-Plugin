@@ -22,6 +22,7 @@ raise 'The VAT plugin requires at least Ruby 2.2.0 or SketchUp 2017.'\
 
 require 'sketchup'
 require 'vat/menu'
+require 'vat/toolbar'
 
 # VAT plugin namespace.
 module VAT
@@ -31,6 +32,8 @@ module VAT
   Menu.new(
     UI.menu('Plugins') # parent_menu
   )
+
+  Toolbar.new.prepare.show
 
   # Load complete.
 

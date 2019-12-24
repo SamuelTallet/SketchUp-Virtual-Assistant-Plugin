@@ -23,6 +23,30 @@ VAT.userName = ''
  */
 VAT.memory = {}
 
+
+/**
+ * Capabilities.
+ */	
+VAT.capabilities = [
+
+	'Open a file.',
+	'Clean my model.',
+	'Select first entity.',
+	'Select first group.',
+	'Select first component.',
+	'Move selection 1m along X axis, 1m along Y axis and 1m along Z axis.',
+	'Rotate selection by 90 degrees.',
+	'Increase selection size 2 times.',
+	'Draw me a cube with a height of 1m, width of 1m and depth of 1m.',
+	'Draw me a cone with a radius of 1m and height of 1m.',
+	'Draw me a cylinder with a radius of 1m and height of 1m.',
+	'Draw me a prism with a radius of 1m, height of 1m and 6 sides.',
+	'Draw me a pyramid with a radius of 1m, height of 1m and 4 sides.',
+	'Draw me a sphere with a radius of 1m.',
+	'Search for a plugin about ...'
+
+]
+
 /**
  * Save memory each 5 seconds.
  */
@@ -53,26 +77,13 @@ VAT.enableAutoComplete = () => {
 
 			term = term.toLowerCase();
 			
-			var choices = [
-
-				'Clean my model.',
-				'Draw me a cube with a height of 1m, width of 1m and depth of 1m.',
-				'Draw me a cone with a radius of 1m and height of 1m.',
-				'Draw me a cylinder with a radius of 1m and height of 1m.',
-				'Draw me a prism with a radius of 1m, height of 1m and 6 sides.',
-				'Draw me a pyramid with a radius of 1m, height of 1m and 4 sides.',
-				'Draw me a sphere with a radius of 1m.',
-				'Search for a plugin about ...'
-
-			];
-			
 			var suggestions = [];
 
-			for (i = 0; i < choices.length; i++) {
+			for (i = 0; i < VAT.capabilities.length; i++) {
 
-				if ( ~choices[i].toLowerCase().indexOf(term) ) {
+				if ( ~VAT.capabilities[i].toLowerCase().indexOf(term) ) {
 
-					suggestions.push(choices[i])
+					suggestions.push(VAT.capabilities[i])
 
 				}
 
@@ -312,13 +323,29 @@ VAT.chatBot = inputMessage => {
 
 	}
 
-	if ( doc.has('^what can you do') ) {
+	if ( doc.has('^what can you do') || doc.has('^help me?$') ) {
 
-		outputMessages.push('I can clean model, draw a 3D shape and search for a plugin.')
+		if ( doc.has('^help me?$') ) {
 
-	} 
+			outputMessages.push('I can maybe help you.')
 
-	if ( doc.has('clean (#Determiner|#Possessive)? SketchUp? model') ) {
+		} else {
+
+			outputMessages.push('I can do many things.')
+
+		}
+
+		outputMessages.push('Choose a sentence then customize it: <br> - ' + VAT.capabilities.join('<br> - '))
+
+	}
+
+	if ( doc.has('open (#Determiner|#Possessive)? SketchUp? (model|file)') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.openModel()
+
+	} else if ( doc.has('clean (#Determiner|#Possessive)? SketchUp? model') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
@@ -327,6 +354,108 @@ VAT.chatBot = inputMessage => {
 			onCompleted: () => { VAT.botSay(VAT.synonym('It\'s done.')) }
 
 		})
+
+	} else if ( doc.has('select #Determiner? first entity') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.selectFirstEntity()
+
+	} else if ( doc.has('select #Determiner? first group') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.selectFirstGroup()
+
+	} else if ( doc.has('select #Determiner? first component') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.selectFirstComponent()
+
+	} else if ( doc.has('move #Determiner? selection') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		var x_translate = doc.match('[#Value] along #Determiner? positive? X axis').text()
+
+		if ( x_translate == '' ) {
+
+			var negative_x_translate = doc.match('[#Value] along #Determiner? negative X axis').text()
+
+			if ( negative_x_translate == '' ) {
+
+				x_translate = '0'
+
+			} else {
+
+				x_translate = '-' + negative_x_translate
+
+			}
+
+		}
+
+		var y_translate = doc.match('[#Value] along #Determiner? positive? Y axis').text()
+
+		if ( y_translate == '' ) {
+
+			var negative_y_translate = doc.match('[#Value] along #Determiner? negative Y axis').text()
+
+			if ( negative_y_translate == '' ) {
+
+				y_translate = '0'
+
+			} else {
+
+				y_translate = '-' + negative_y_translate
+
+			}
+
+		}
+
+		var z_translate = doc.match('[#Value] along #Determiner? positive? Z axis').text()
+
+		if ( z_translate == '' ) {
+
+			var negative_z_translate = doc.match('[#Value] along #Determiner? negative Z axis').text()
+
+			if ( negative_z_translate == '' ) {
+
+				z_translate = '0'
+
+			} else {
+
+				z_translate = '-' + negative_z_translate
+
+			}
+
+		}
+
+		sketchup.moveSelection(x_translate, y_translate, z_translate)
+
+	} else if ( doc.has('rotate #Determiner? selection by') ) {
+
+		var angle = doc.match('[#NumericValue] degrees').text()
+
+		if ( angle != '' ) {
+
+			outputMessages.push(VAT.synonym('OK.'))
+
+			sketchup.rotateSelection(angle)
+
+		}
+
+	} else if ( doc.has('increase #Determiner? selection size') ) {
+
+		var scale = doc.match('[#NumericValue] times').text()
+
+		if ( scale != '' ) {
+
+			outputMessages.push(VAT.synonym('OK.'))
+
+			sketchup.scaleSelection(scale)
+
+		}
 
 	} else if ( doc.has('draw #Pronoun? #Determiner? (cube|box) with') ) {
 

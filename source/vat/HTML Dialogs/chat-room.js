@@ -30,20 +30,30 @@ VAT.memory = {}
 VAT.capabilities = [
 
 	'Open a file.',
-	'Clean my model.',
-	'Select first entity.',
+	'Clean model.',
+	'Select first object.',
 	'Select first group.',
-	'Select first component.',
-	'Move selection 1m along X axis, 1m along Y axis and 1m along Z axis.',
-	'Rotate selection by 90 degrees.',
-	'Increase selection size 2 times.',
-	'Draw me a cube with a height of 1m, width of 1m and depth of 1m.',
-	'Draw me a cone with a radius of 1m and height of 1m.',
-	'Draw me a cylinder with a radius of 1m and height of 1m.',
-	'Draw me a prism with a radius of 1m, height of 1m and 6 sides.',
-	'Draw me a pyramid with a radius of 1m, height of 1m and 4 sides.',
-	'Draw me a sphere with a radius of 1m.',
-	'Search for a plugin about ...'
+	'Select group with name ...',
+	'Select first instance.',
+	'Select instance with name ...',
+	'Move.',
+	'Rotate by 90 degrees.',
+	'Increase size 2 times.',
+	'Rename ...',
+	'Duplicate and name ...',
+	'Clear selection.',
+	'Delete.',
+	'Activate Push Pull tool.',
+	'Activate Rectangle tool.',
+	'Activate ... tool.',
+	'Draw a cube.',
+	'Draw a cone.',
+	'Draw a cylinder.',
+	'Draw a prism.',
+	'Draw a pyramid.',
+	'Draw a sphere.',
+	'Write ...',
+	'Search an extension about ...'
 
 ]
 
@@ -111,6 +121,119 @@ VAT.capitalize = string => {
 }
 
 /**
+ * Converts a string to camel case.
+ *
+ * @param {string} string
+ *
+ * @return {string}
+ */
+VAT.camelize = string => {
+
+  return string.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
+
+    return index == 0 ? word.toLowerCase() : word.toUpperCase()
+
+  }).replace(/\s+/g, '')
+
+}
+
+/**
+ * Calculates Levenshtein distance between two given strings.
+ *
+ * @see https://gist.github.com/andrei-m/982927#gistcomment-1931258
+ *
+ * @return {number}
+ */
+VAT.levenshtein = (a, b) => {
+
+  if (a.length === 0) return b.length
+  if (b.length === 0) return a.length
+
+  let tmp, i, j, prev, val, row
+
+  // swap to save some memory O(min(a,b)) instead of O(a)
+  if (a.length > b.length) {
+
+    tmp = a
+    a = b
+    b = tmp
+
+  }
+
+  row = Array(a.length + 1)
+
+  // init the row
+  for (i = 0; i <= a.length; i++) {
+
+    row[i] = i
+
+  }
+
+  // fill in the rest
+  for (i = 1; i <= b.length; i++) {
+
+    prev = i
+
+    for (j = 1; j <= a.length; j++) {
+
+      if (b[i-1] === a[j-1]) {
+
+        val = row[j-1] // match
+
+      } else {
+
+        val = Math.min(row[j-1] + 1, // substitution
+              Math.min(prev + 1,     // insertion
+                       row[j] + 1))  // deletion
+      }
+
+      row[j - 1] = prev
+      prev = val
+
+    }
+
+    row[a.length] = prev
+  }
+
+  return row[a.length]
+
+}
+
+/**
+ * "Did you mean" deduces a capability from an input message.
+ */
+VAT.didYouMean = inputMessage => {
+
+	var inputVerb = inputMessage.replace(/ .*/, '');
+
+	var minDistance = Infinity
+	var bestMatch = ''
+
+	VAT.capabilities.forEach(capability => {
+
+		var capabilityVerb = capability.replace(/ .*/, '');
+
+		if ( capabilityVerb != '' ) {
+
+			var distance = VAT.levenshtein(inputVerb, capabilityVerb)
+
+			if ( distance <= minDistance ) {
+
+				minDistance = distance
+
+				bestMatch = capability
+
+			}
+
+		}
+
+	})
+
+	return bestMatch
+
+}
+
+/**
  * Returns a random synonym for an expression.
  *
  * @param {string} expr Expression.
@@ -174,11 +297,15 @@ VAT.chatBot = inputMessage => {
 
 	var doc = nlp(inputMessage)
 
+	// Greetings.
+
 	if ( doc.has('(hello|hi|hey)') ) {
 
 		outputMessages.push('Hello ' + VAT.userName + '!')
 
 	}
+
+	// Math.
 
 	if ( /\d+ *\+ *\d+/g.test(inputMessage) ) {
 
@@ -206,6 +333,8 @@ VAT.chatBot = inputMessage => {
 
 	}
 
+	// Subject.
+
 	if ( doc.has('^let\'s talk about .') ) {
 
 		VAT.memory.__subject__ = doc.after('^let\'s talk about').text()
@@ -227,6 +356,18 @@ VAT.chatBot = inputMessage => {
 		outputMessages.push('We\'re talking about ' + VAT.memory.__subject__ + '.')
 
 	}
+
+	// Time.
+
+	if ( doc.has('^what time is it') ) {
+
+		var date = new Date()
+
+		outputMessages.push(date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds())
+
+	} else
+
+	// Quality.
 
 	if ( doc.has('. is a .') ) {
 
@@ -252,12 +393,12 @@ VAT.chatBot = inputMessage => {
 
 	} else if ( doc.has('^what is #Determiner? . of #Determiner? .') ) {
 
-		var prop = doc.match('^what is #Determiner? [.] of #Determiner? .' ).text('normal')
-		var object = doc.match('^what is #Determiner? . of #Determiner? [.]' ).text('normal')
+		var prop = doc.match('^what is #Determiner? [.] of #Determiner? .').text('normal')
+		var object = doc.after('^what is #Determiner? . of #Determiner?').text('normal')
 
 		if ( VAT.memory[object] && VAT.memory[object][prop] ) {
 
-			outputMessages.push(VAT.capitalize(VAT.memory[object][prop]) + '.')
+			outputMessages.push(VAT.capitalize(VAT.memory[object][prop][0] ) + '.')
 
 		} else {
 
@@ -265,29 +406,24 @@ VAT.chatBot = inputMessage => {
 
 		}
 
-	} else if ( doc.has('. is .') ) {
+	} else if ( doc.has('^what are #Determiner? . of #Determiner? .') ) {
 
-		var object = doc.match('[.] is').text('normal')
+		var prop = doc.match('^what are #Determiner? [.] of #Determiner? .').nouns().toSingular().text('normal')
+		var object = doc.after('^what are #Determiner? . of #Determiner?').text('normal')
 
-		var prop = doc.match('is [.]').text('normal')
+		if ( VAT.memory[object] && VAT.memory[object][prop] ) {
 
-		if ( !VAT.memory[object] ) {
+			outputMessages.push(VAT.capitalize(VAT.memory[object][prop].join(' and ')) + '.')
 
-			VAT.memory[object] = {}
+		} else {
 
-		}
-
-		if ( VAT.memory[prop] && VAT.memory[prop]['__classes__'] ) {
-
-			VAT.memory[object][ VAT.memory[prop]['__classes__'][0] ] = prop
+			outputMessages.push('I don\'t know.')
 
 		}
-
-		outputMessages.push(VAT.synonym('I take note.'))
 
 	} else if ( doc.has('^what do you know about .') ) {
 
-		var object = doc.match('^what do you know about [.]').text('normal')
+		var object = doc.after('^what do you know about').text('normal')
 
 		if ( VAT.memory[object] && VAT.memory[object]['__classes__'] ) {
 
@@ -299,15 +435,86 @@ VAT.chatBot = inputMessage => {
 
 		}
 
+	} else if ( doc.has('^what is .') ) {
+
+		var object = doc.after('^what is').text('normal')
+
+		if ( VAT.memory[object] && VAT.memory[object]['__classes__'] ) {
+
+			outputMessages.push(VAT.capitalize(object) + ' is a ' + VAT.memory[object]['__classes__'].join(' and a ') + '.')
+
+		} else {
+
+			outputMessages.push('I don\'t know.')
+
+		}
+
+	} else if ( doc.has('. is .') ) {
+
+		var object = doc.before('is').text('normal')
+
+		var prop = doc.match('. is [.]').text('normal')
+
+		if ( !VAT.memory[object] ) {
+
+			VAT.memory[object] = {}
+
+		}
+
+		if ( VAT.memory[prop] && VAT.memory[prop]['__classes__'] ) {
+
+			if ( !VAT.memory[object][ VAT.memory[prop]['__classes__'][0] ] ) {
+
+				VAT.memory[object][ VAT.memory[prop]['__classes__'][0] ] = []
+
+			}
+
+			VAT.memory[object][ VAT.memory[prop]['__classes__'][0] ].push(prop)
+
+		}
+
+		outputMessages.push(VAT.synonym('I take note.'))
+
 	}
+
+	// Quantity.
+
+	if ( doc.has('#Determiner? . has #Value .') ) {
+
+		var object = doc.match('[.] has #Value').text('normal')
+		var prop = doc.match('has #Value [.]').text('normal')
+		var count = doc.match('#Value').text('normal')
+
+		if ( !VAT.memory[object] ) {
+
+			VAT.memory[object] = {}
+
+		}
+
+		VAT.memory[object][prop] = count
+
+		outputMessages.push(VAT.synonym('I take note.'))
+
+	} else if ( doc.has('^how many . #Determiner? . has') ) {
+
+		var object = doc.match('[.] has').text('normal')
+		var prop = doc.match('many [.]').text('normal')
+
+		outputMessages.push(VAT.capitalize(VAT.memory[object][prop]) + '.')
+
+	}
+
+	// Politeness.
 
 	if ( doc.has('^how are you') ) {
 
 		outputMessages.push('I\'m fine and you?')
 
-	} 
+	}
 
-	if ( doc.has('^you are #Determiner #Adjective bot') ) {
+	// Mirroring.
+
+	if ( doc.has('^you are #Determiner #Adjective (assistant|bot)') ) {
 
 		var adjective = doc.match('#Adjective').text()
 
@@ -322,6 +529,8 @@ VAT.chatBot = inputMessage => {
 		}
 
 	}
+
+	// Capabilities.
 
 	if ( doc.has('^what can you do') || doc.has('^help me?$') ) {
 
@@ -339,13 +548,13 @@ VAT.chatBot = inputMessage => {
 
 	}
 
-	if ( doc.has('open (#Determiner|#Possessive)? SketchUp? (model|file)') ) {
+	if ( doc.has('^open (#Determiner|#Possessive)? SketchUp? (model|file)') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
 		sketchup.openModel()
 
-	} else if ( doc.has('clean (#Determiner|#Possessive)? SketchUp? model') ) {
+	} else if ( doc.has('^clean (#Determiner|#Possessive)? SketchUp? model') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
@@ -355,85 +564,55 @@ VAT.chatBot = inputMessage => {
 
 		})
 
-	} else if ( doc.has('select #Determiner? first entity') ) {
+	} else if ( doc.has('^select #Determiner? first (object|entity)') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
 		sketchup.selectFirstEntity()
 
-	} else if ( doc.has('select #Determiner? first group') ) {
+	} else if ( doc.has('^select #Determiner? first group') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
 		sketchup.selectFirstGroup()
 
-	} else if ( doc.has('select #Determiner? first component') ) {
+	} else if ( doc.has('^select #Determiner? group with name .') ) {
+
+		var name = doc.after('name').text().trim()
+
+		if ( name != '' ) {
+
+			outputMessages.push(VAT.synonym('OK.'))
+
+			sketchup.selectGroupsNamed(name)
+
+		}
+
+	} else if ( doc.has('^select #Determiner? first (instance|component)') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
 		sketchup.selectFirstComponent()
 
-	} else if ( doc.has('move #Determiner? selection') ) {
+	} else if ( doc.has('^select #Determiner? (instance|component) with name .') ) {
+
+		var name = doc.after('name').text().trim()
+
+		if ( name != '' ) {
+
+			outputMessages.push(VAT.synonym('OK.'))
+
+			sketchup.selectComponentsNamed(name)
+
+		}
+
+	} else if ( doc.has('^move') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
-		var x_translate = doc.match('[#Value] along #Determiner? positive? X axis').text()
+		sketchup.moveSelection()
 
-		if ( x_translate == '' ) {
-
-			var negative_x_translate = doc.match('[#Value] along #Determiner? negative X axis').text()
-
-			if ( negative_x_translate == '' ) {
-
-				x_translate = '0'
-
-			} else {
-
-				x_translate = '-' + negative_x_translate
-
-			}
-
-		}
-
-		var y_translate = doc.match('[#Value] along #Determiner? positive? Y axis').text()
-
-		if ( y_translate == '' ) {
-
-			var negative_y_translate = doc.match('[#Value] along #Determiner? negative Y axis').text()
-
-			if ( negative_y_translate == '' ) {
-
-				y_translate = '0'
-
-			} else {
-
-				y_translate = '-' + negative_y_translate
-
-			}
-
-		}
-
-		var z_translate = doc.match('[#Value] along #Determiner? positive? Z axis').text()
-
-		if ( z_translate == '' ) {
-
-			var negative_z_translate = doc.match('[#Value] along #Determiner? negative Z axis').text()
-
-			if ( negative_z_translate == '' ) {
-
-				z_translate = '0'
-
-			} else {
-
-				z_translate = '-' + negative_z_translate
-
-			}
-
-		}
-
-		sketchup.moveSelection(x_translate, y_translate, z_translate)
-
-	} else if ( doc.has('rotate #Determiner? selection by') ) {
+	} else if ( doc.has('^rotate by .') ) {
 
 		var angle = doc.match('[#NumericValue] degrees').text()
 
@@ -445,7 +624,7 @@ VAT.chatBot = inputMessage => {
 
 		}
 
-	} else if ( doc.has('increase #Determiner? selection size') ) {
+	} else if ( doc.has('^increase size .') ) {
 
 		var scale = doc.match('[#NumericValue] times').text()
 
@@ -457,103 +636,117 @@ VAT.chatBot = inputMessage => {
 
 		}
 
-	} else if ( doc.has('draw #Pronoun? #Determiner? (cube|box) with') ) {
+	} else if ( doc.has('^name .') ) {
+
+		var name = doc.after('name').text().trim()
+
+		if ( name != '' ) {
+
+			outputMessages.push(VAT.synonym('OK.'))
+
+			sketchup.renameSelection(name)
+
+		}
+
+	} else if ( doc.has('^(duplicate|copy) and name .') ) {
+
+		var name = doc.after('name').text().trim()
+
+		if ( name != '' ) {
+
+			outputMessages.push(VAT.synonym('OK.'))
+
+			sketchup.copySelection(name)
+
+		}
+
+	} else if ( doc.has('^clear #Determiner? selection') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
-		var attributes = {}
-
-		attributes.width = doc.match('width #Preposition [#Value]').text()
-		attributes.height = doc.match('height #Preposition [#Value]').text()
-		attributes.depth = doc.match('depth #Preposition [#Value]').text()
-
-		sketchup.drawBox(attributes, {
+		sketchup.clearSelection({
 
 			onCompleted: () => { VAT.botSay(VAT.synonym('It\'s done.')) }
 
 		})
 
-	} else if ( doc.has('draw #Pronoun? #Determiner? cone with') ) {
+	} else if ( doc.has('^(delete|erase)') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
-		var attributes = {}
+		sketchup.eraseSelectedEntities()
 
-		attributes.radius = doc.match('radius #Preposition [#Value]').text()
-		attributes.height = doc.match('height #Preposition [#Value]').text()
-
-		sketchup.drawCone(attributes, {
-
-			onCompleted: () => { VAT.botSay(VAT.synonym('It\'s done.')) }
-
-		})
-
-	} else if ( doc.has('draw #Pronoun? #Determiner? cylinder with') ) {
+	} else if ( doc.has('^activate #Determiner? .+ tool') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
-		var attributes = {}
+		var action = doc.text('reduced')
 
-		attributes.radius = doc.match('radius #Preposition [#Value]').text()
-		attributes.height = doc.match('height #Preposition [#Value]').text()
+		action = action.replace(doc.match('#Determiner').text('reduced'), '')
+		action = action.replace(doc.match('please').text('reduced'), '')
 
-		sketchup.drawCylinder(attributes, {
+		action = action.replace('select', 'selection')
+		action = action.replace('eraser', 'erase')
+		action = action.replace('paint bucket', 'paint')
+		action = action.replace('follow me', 'extrude')
+		action = action.replace('tape measure', 'measure')
+		action = action.replace('axes', 'axis')
+		action = action.replace('dimensions', 'dimension')
 
-			onCompleted: () => { VAT.botSay(VAT.synonym('It\'s done.')) }
+		action = action.replace('activate', 'select')
+		action = VAT.camelize(action) + ':'
 
-		})
+		sketchup.sendAction(action)
 
-	} else if ( doc.has('draw #Pronoun? #Determiner? prism with') ) {
-
-		outputMessages.push(VAT.synonym('OK.'))
-
-		var attributes = {}
-
-		attributes.radius = doc.match('radius #Preposition [#Value]').text()
-		attributes.height = doc.match('height #Preposition [#Value]').text()
-		attributes.num_sides = doc.match('[#NumericValue] sides').text()
-
-		sketchup.drawPrism(attributes, {
-
-			onCompleted: () => { VAT.botSay(VAT.synonym('It\'s done.')) }
-
-		})
-
-	} else if ( doc.has('draw #Pronoun? #Determiner? pyramid with') ) {
+	} else if ( doc.has('^draw me? #Determiner? (cube|box)') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
-		var attributes = {}
+		sketchup.drawBox()
 
-		attributes.radius = doc.match('radius #Preposition [#Value]').text()
-		attributes.height = doc.match('height #Preposition [#Value]').text()
-		attributes.num_sides = doc.match('[#NumericValue] sides').text()
-
-		sketchup.drawPyramid(attributes, {
-
-			onCompleted: () => { VAT.botSay(VAT.synonym('It\'s done.')) }
-
-		})
-
-	} else if ( doc.has('draw #Pronoun? #Determiner? sphere with') ) {
+	} else if ( doc.has('^draw me? #Determiner? cone') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
-		var attributes = {}
+		sketchup.drawCone()
 
-		attributes.radius = doc.match('radius #Preposition [#Value]').text()
-
-		sketchup.drawSphere(attributes, {
-
-			onCompleted: () => { VAT.botSay(VAT.synonym('It\'s done.')) }
-
-		})
-
-	} else if ( doc.has('search for #Pronoun? #Determiner? plugin about') ) {
+	} else if ( doc.has('^draw me? #Determiner? cylinder') ) {
 
 		outputMessages.push(VAT.synonym('OK.'))
 
-		var topics = doc.after('search for #Pronoun? #Determiner? plugin about').text()
+		sketchup.drawCylinder()
+
+	} else if ( doc.has('^draw me? #Determiner? prism') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.drawPrism()
+
+	} else if ( doc.has('^draw me? #Determiner? pyramid') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.drawPyramid()
+
+	} else if ( doc.has('^draw me? #Determiner? sphere') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.drawSphere()
+
+	} else if ( doc.has('^write .') ) {
+
+		var text = doc.after('write').text().trim()
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		sketchup.writeText()
+
+	} else if ( doc.has('^search #Determiner? (extension|plugin) about .') ) {
+
+		outputMessages.push(VAT.synonym('OK.'))
+
+		var topics = doc.after('about').text().trim()
 
 		sketchup.searchPlugin(topics, {
 
@@ -561,7 +754,11 @@ VAT.chatBot = inputMessage => {
 
 		})
 
-	} else if ( doc.has('(goodbye|bye)') || doc.has('see you') ) {
+	}
+
+	// Politeness.
+
+	if ( doc.has('(goodbye|bye)') || doc.has('see you') ) {
 
 		sketchup.closeChatRoom()
 
@@ -573,11 +770,21 @@ VAT.chatBot = inputMessage => {
 
 	}
 
-	if ( doc.has('(ok|okay|good|well)') ) {
+	// Mirroring.
+
+	if ( doc.has('(yes|perfect|ok|okay|good|well)') ) {
 
 		outputMessages.push('👍')
 
 	}
+
+	if ( inputMessage.trim() == '' ) {
+
+		outputMessages.push('🤔')
+
+	}
+
+	// Output.
 
 	if ( outputMessages.length >= 1 ) {
 
@@ -585,7 +792,7 @@ VAT.chatBot = inputMessage => {
 
 	} else {
 
-		VAT.botSay('I didn\'t understand... Could you reformulate your sentence?')
+		VAT.botSay('I didn\'t understand... Did you mean: ' + VAT.didYouMean(inputMessage))
 
 	}
 
@@ -630,7 +837,39 @@ VAT.listenToUserSay = () => {
 
 		document.querySelector('#user-input').value = ''
 
+		window.scrollTo(0, document.body.scrollHeight);
+
 	})
+
+	window.setInterval(() => {
+
+		var request = new XMLHttpRequest()
+
+		request.addEventListener('load', event => {
+
+			if ( event.target.status != 200 ) {
+
+				return false;
+
+			}
+
+			var sentence = event.target.response.trim()
+
+			if ( sentence != '' ) {
+
+				VAT.chatBot(VAT.capitalize(sentence) + '.')
+
+				window.scrollTo(0, document.body.scrollHeight);
+
+			}
+
+		})
+
+		request.open('GET', 'http://localhost:8000/readelete-sentence.php')
+
+		request.send();
+
+	}, 1000)
 
 }
 

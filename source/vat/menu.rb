@@ -22,6 +22,7 @@ raise 'The VAT plugin requires at least Ruby 2.2.0 or SketchUp 2017.'\
 
 require 'sketchup'
 require 'vat/chat_room'
+require 'vat/web_server'
 
 # VAT plugin namespace.
 module VAT
@@ -41,6 +42,12 @@ module VAT
       parent_menu.add_item('🤖 ' + TRANSLATE[NAME]) {
 
         ChatRoom.new.html_dialog.show
+
+        if Sketchup.platform == :platform_win
+
+          UI.openURL(WebServer::URL + 'speech-recognizer.html')
+
+        end
 
       }
 

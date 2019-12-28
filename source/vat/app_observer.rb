@@ -21,26 +21,21 @@ raise 'The VAT plugin requires at least Ruby 2.2.0 or SketchUp 2017.'\
   unless RUBY_VERSION.to_f >= 2.2 # SketchUp 2017 includes Ruby 2.2.4.
 
 require 'sketchup'
-require 'vat/app_observer'
 require 'vat/web_server'
-require 'vat/menu'
-require 'vat/toolbar'
 
 # VAT plugin namespace.
 module VAT
 
-  Sketchup.add_observer(AppObserver.new)
+  # Observes SketchUp events and reacts.
+  class AppObserver < Sketchup::AppObserver
 
-  WebServer.start
+    # When SketchUp closes:
+    def onQuit
 
-  # Plugs VAT menu into SketchUp UI.
+      WebServer.stop
 
-  Menu.new(
-    UI.menu('Plugins') # parent_menu
-  )
+    end
 
-  Toolbar.new.prepare.show
-
-  # Load complete.
+  end
 
 end

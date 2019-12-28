@@ -95,6 +95,10 @@ module VAT
 
           @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
 
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Something goes wrong!')")
+
         end
 
       end
@@ -113,7 +117,7 @@ module VAT
 
         else
 
-          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+          @html_dialog.execute_script("VAT.botSay('No entity found!')")
 
         end
 
@@ -127,7 +131,21 @@ module VAT
 
         else
 
-          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+          @html_dialog.execute_script("VAT.botSay('No group found!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('selectGroupsNamed') do |_context, name|
+
+        if Entities.select_groups_named(name)
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('No matching group!')")
 
         end
 
@@ -141,21 +159,51 @@ module VAT
 
         else
 
-          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+          @html_dialog.execute_script("VAT.botSay('No component found!')")
 
         end
 
       end
 
-      @html_dialog.add_action_callback('moveSelection') do |_context, x, y ,z|
+      @html_dialog.add_action_callback('selectComponentsNamed') do |_context, name|
 
-        if Entities.move_selection(x.to_l, y.to_l, z.to_l)
+        if Entities.select_components_named(name)
 
           @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
 
         else
 
+          @html_dialog.execute_script("VAT.botSay('No matching component!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('moveSelection') do
+
+        parameters = UI.inputbox(
+          ['X axis', 'Y axis', 'Z axis'], # Prompts
+          ['1m', '1m', '1m'], # Defaults
+          NAME # Title
+        )
+
+        return if parameters == false
+
+        status = Entities.move_selection(
+          parameters[0].to_l, parameters[1].to_l, parameters[2].to_l
+        )
+
+        if status == true
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        elsif status.nil?
+
           @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        else # if status == false
+
+          @html_dialog.execute_script("VAT.botSay('No grouponent found!')")
 
         end
 
@@ -163,13 +211,19 @@ module VAT
 
       @html_dialog.add_action_callback('rotateSelection') do |_context, angle|
 
-        if Entities.rotate_selection(angle.to_i)
+        status = Entities.rotate_selection(angle.to_i)
+
+        if status == true
 
           @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
 
-        else
+        elsif status.nil?
 
           @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        else # if status == false
+
+          @html_dialog.execute_script("VAT.botSay('No grouponent found!')")
 
         end
 
@@ -177,7 +231,73 @@ module VAT
 
       @html_dialog.add_action_callback('scaleSelection') do |_context, scale|
 
-        if Entities.scale_selection(scale.to_f)
+        status = Entities.scale_selection(scale.to_f)
+
+        if status == true
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        elsif status.nil?
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        else # if status == false
+
+          @html_dialog.execute_script("VAT.botSay('No grouponent found!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('renameSelection') do |_context, name|
+
+        status = Entities.rename_selection(name)
+
+        if status == true
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        elsif status.nil?
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        else # if status == false
+
+          @html_dialog.execute_script("VAT.botSay('No grouponent found!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('copySelection') do |_context, name|
+
+        status = Entities.copy_selection(name)
+
+        if status == true
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        elsif status.nil?
+
+          @html_dialog.execute_script("VAT.botSay('Nothing is selected!')")
+
+        else # if status == false
+
+          @html_dialog.execute_script("VAT.botSay('No grouponent found!')")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('clearSelection') do
+
+        Entities.clear_selection
+
+      end
+
+      @html_dialog.add_action_callback('eraseSelectedEntities') do
+
+        if Entities.erase_selected_entities
 
           @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
 
@@ -189,59 +309,159 @@ module VAT
 
       end
 
-      @html_dialog.add_action_callback('drawBox') do |_context, attributes|
+      @html_dialog.add_action_callback('sendAction') do |_context, action|
 
-        Shapes.create_box(
-          attributes['width'].to_l,
-          attributes['depth'].to_l,
-          attributes['height'].to_l
-        )
+        if Sketchup.send_action(action)
 
-      end
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
 
-      @html_dialog.add_action_callback('drawCone') do |_context, attributes|
+        else
 
-        Shapes.create_cone(
-          attributes['radius'].to_l,
-          attributes['height'].to_l
-        )
+          @html_dialog.execute_script("VAT.botSay('No matching action!')")
+
+        end
 
       end
 
-      @html_dialog.add_action_callback('drawCylinder') do |_context, attributes|
+      @html_dialog.add_action_callback('drawBox') do
 
-        Shapes.create_cylinder(
-          attributes['radius'].to_l,
-          attributes['height'].to_l
+        parameters = UI.inputbox(
+          ['Width', 'Depth', 'Height'], # Prompts
+          ['1m', '1m', '1m'], # Defaults
+          NAME # Title
         )
+
+        if parameters.is_a?(Array)
+
+          Shapes.create_box(
+            parameters[0].to_l,
+            parameters[1].to_l,
+            parameters[2].to_l
+          )
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        end
 
       end
 
-      @html_dialog.add_action_callback('drawPrism') do |_context, attributes|
+      @html_dialog.add_action_callback('drawCone') do
 
-        Shapes.create_prism(
-          attributes['radius'].to_l,
-          attributes['height'].to_l,
-          attributes['num_sides'].to_i
+        parameters = UI.inputbox(
+          ['Radius', 'Height'], # Prompts
+          ['1m', '1m'], # Defaults
+          NAME # Title
         )
+
+        if parameters.is_a?(Array)
+
+          Shapes.create_cone(
+            parameters[0].to_l,
+            parameters[1].to_l
+          )
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        end
 
       end
 
-      @html_dialog.add_action_callback('drawPyramid') do |_context, attributes|
+      @html_dialog.add_action_callback('drawCylinder') do
 
-        Shapes.create_pyramid(
-          attributes['radius'].to_l,
-          attributes['height'].to_l,
-          attributes['num_sides'].to_i
+        parameters = UI.inputbox(
+          ['Radius', 'Height'], # Prompts
+          ['1m', '1m'], # Defaults
+          NAME # Title
         )
+
+        if parameters.is_a?(Array)
+
+          Shapes.create_cylinder(
+            parameters[0].to_l,
+            parameters[1].to_l
+          )
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        end
 
       end
 
-      @html_dialog.add_action_callback('drawSphere') do |_context, attributes|
+      @html_dialog.add_action_callback('drawPrism') do
 
-        Shapes.create_sphere(
-          attributes['radius'].to_l
+        parameters = UI.inputbox(
+          ['Radius', 'Height', 'Sides'], # Prompts
+          ['1m', '1m', '6'], # Defaults
+          NAME # Title
         )
+
+        if parameters.is_a?(Array)
+
+          Shapes.create_prism(
+            parameters[0].to_l,
+            parameters[1].to_l,
+            parameters[2].to_i
+          )
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('drawPyramid') do
+
+        parameters = UI.inputbox(
+          ['Radius', 'Height', 'Sides'], # Prompts
+          ['1m', '1m', '4'], # Defaults
+          NAME # Title
+        )
+
+        if parameters.is_a?(Array)
+
+          Shapes.create_pyramid(
+            parameters[0].to_l,
+            parameters[1].to_l,
+            parameters[2].to_i
+          )
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('drawSphere') do
+
+        parameters = UI.inputbox(
+          ['Radius'], # Prompts
+          ['1m'], # Defaults
+          NAME # Title
+        )
+
+        if parameters.is_a?(Array)
+
+          Shapes.create_sphere(
+            parameters[0].to_l
+          )
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        end
+
+      end
+
+      @html_dialog.add_action_callback('writeText') do |_context, text|
+
+        if Entities.write_text(text)
+
+          @html_dialog.execute_script("VAT.botSay(VAT.synonym('It\\'s done.'))")
+
+        else
+
+          @html_dialog.execute_script("VAT.botSay('Something goes wrong!')")
+
+        end
 
       end
 

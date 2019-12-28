@@ -26,7 +26,7 @@ require 'extensions'
 # VAT plugin namespace.
 module VAT
 
-  VERSION = '1.0.1'.freeze
+  VERSION = '1.0.2'.freeze
 
   # Load translation if it's available for current locale.
   TRANSLATE = LanguageHandler.new('vat.strings')
@@ -44,7 +44,7 @@ module VAT
   extension.copyright   = "© 2019 #{extension.creator}"
 
   features = [
-    TRANSLATE['Interact with SketchUp thanks to natural language.']
+    TRANSLATE['Control SketchUp with your voice or text messages.']
   ]
 
   extension.description = features.join(' ')

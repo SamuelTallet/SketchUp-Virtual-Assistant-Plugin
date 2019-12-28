@@ -20,27 +20,54 @@
 raise 'The VAT plugin requires at least Ruby 2.2.0 or SketchUp 2017.'\
   unless RUBY_VERSION.to_f >= 2.2 # SketchUp 2017 includes Ruby 2.2.4.
 
-require 'sketchup'
-require 'vat/app_observer'
-require 'vat/web_server'
-require 'vat/menu'
-require 'vat/toolbar'
+require 'fileutils'
 
 # VAT plugin namespace.
 module VAT
 
-  Sketchup.add_observer(AppObserver.new)
+  # Local Web server.
+  module WebServer
 
-  WebServer.start
+    # Absolute path on disk...
+    DIR = File.join(__dir__, 'Web Server').freeze
 
-  # Plugs VAT menu into SketchUp UI.
+    # URL with trailing slash.
+    URL = 'http://localhost:8000/'.freeze
 
-  Menu.new(
-    UI.menu('Plugins') # parent_menu
-  )
+    # Starts PHP-CGI & NGINX.
+    # 
+    # @return [nil, Boolean]
+    def self.start
 
-  Toolbar.new.prepare.show
+      if Sketchup.platform == :platform_win
 
-  # Load complete.
+        return system('"' + File.join(DIR, 'start.bat') + '"')
+
+      else # if Sketchup.platform == :platform_osx
+
+        return false
+
+      end
+
+    end
+
+    # Stops PHP-CGI & NGINX.
+    # 
+    # @return [nil, Boolean]
+    def self.stop
+
+      if Sketchup.platform == :platform_win
+
+        return system('"' + File.join(DIR, 'stop.bat') + '"')
+
+      else # if Sketchup.platform == :platform_osx
+
+        return false
+
+      end
+
+    end
+
+  end
 
 end

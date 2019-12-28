@@ -1,6 +1,6 @@
 # Free virtual assistant plugin for SketchUp
 
-🤖 Interact with SketchUp thanks to natural language.
+🎤 Control SketchUp with your voice/microphone (on Windows) 💬 or with text messages (in English).
 
 Demos
 -----

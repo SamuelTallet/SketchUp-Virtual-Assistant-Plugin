@@ -39,7 +39,7 @@ VAT.capabilities = [
 	'Move.',
 	'Rotate by 90 degrees.',
 	'Increase size 2 times.',
-	'Rename ...',
+	'Name ...',
 	'Duplicate and name ...',
 	'Clear selection.',
 	'Delete.',

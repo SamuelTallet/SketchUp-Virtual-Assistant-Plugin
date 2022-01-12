@@ -5,9 +5,9 @@
 Demos
 -----
 
-![VAT Plugin Chat Demo #1](https://raw.githubusercontent.com/SamuelTS/SketchUp-Virtual-Assistant-Plugin/master/docs/chat_demo_1.png)
+![VAT Plugin Chat Demo #1](https://raw.githubusercontent.com/SamuelTallet/SketchUp-Virtual-Assistant-Plugin/master/docs/chat_demo_1.png)
 
-![VAT Plugin Chat Demo #2](https://raw.githubusercontent.com/SamuelTS/SketchUp-Virtual-Assistant-Plugin/master/docs/chat_demo_2.png)
+![VAT Plugin Chat Demo #2](https://raw.githubusercontent.com/SamuelTallet/SketchUp-Virtual-Assistant-Plugin/master/docs/chat_demo_2.png)
 
 Documentation
 -------------
